@@ -66,4 +66,16 @@ const workerConfig = {
   },
 };
 
-module.exports = [appConfig, workerConfig];
+
+const highlightingConfig = {
+  entry: "./js/mode-tao.js",
+  resolve: {
+    extensions: [".js", ".wasm"],
+  },
+  output: {
+    path: path.resolve(dist, "ace"),
+    filename: "mode-tao.js",
+  },
+};
+
+module.exports = [appConfig, workerConfig,highlightingConfig];
