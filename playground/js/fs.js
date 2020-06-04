@@ -85,14 +85,21 @@ function createFile(root, name, file, playground) {
   li.classList.add("link");
   li.innerText = name;
   li.onclick = () => {
-    const reader = new FileReader();
+    var filesObjectStore = db
+      .transaction("files", "readonly")
+      .objectStore("files");
+    var get = filesObjectStore.get(file.path);
 
-    reader.addEventListener("loadend", (e) => {
-      const text = e.srcElement.result;
-      editor.setValue(text);
-    });
+    get.onsuccess = (event) => {
+      const reader = new FileReader();
 
-    reader.readAsText(file.blob);
+      reader.addEventListener("loadend", (e) => {
+        const text = e.srcElement.result;
+        editor.setValue(text);
+      });
+
+      reader.readAsText(event.target.result.blob);
+    };
 
     current_file = file.path;
     current_file_name = name;
@@ -238,7 +245,14 @@ module.exports.newFolder = function () {
     root_path = folder.path;
   }
 
-  getOrCreateFolder(root, name, root_path);
+  let folder = getOrCreateFolder(root, name, root_path);
+
+  console.log(folder.node);
+  
+  currentFolder = `${root_path}/${name}`;
+  focus_node.classList.remove("fs-focus");
+  folder.node.parentNode.classList.add("fs-focus");
+  focus_node = folder.node.parentNode;
 };
 
 module.exports.save = function () {
