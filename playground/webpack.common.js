@@ -14,7 +14,7 @@ const appConfig = {
   },
   output: {
     path: dist,
-    filename: "[name].[contenthash].js",
+    filename: "[name].[contenthash].js"
   },
   devServer: {
     contentBase: dist,
@@ -28,8 +28,8 @@ const appConfig = {
   plugins: [
     new CopyPlugin([
       {
-        from: path.resolve(__dirname, "static/ace"),
-        to: path.resolve(dist, "ace"),
+        from: path.resolve(__dirname, "static/assets"),
+        to: dist,
       },
     ]),
     new HtmlWebpackPlugin({
@@ -43,7 +43,7 @@ const appConfig = {
     rules: [
       {
         test: /\.css$/,
-        use: [MiniCssExtractPlugin.loader, "css-loader"],
+        use: [MiniCssExtractPlugin.loader, "css-loader?url=false"],
       },
     ],
   },

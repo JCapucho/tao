@@ -1,4 +1,14 @@
 import "./index.css";
+import { newFile, newFolder, save, currentFilename } from "./fs.js";
+
+window.newFile = newFile;
+window.newFolder = newFolder;
+
+if (!window.WebAssembly) {
+  alert(
+    "The playground won't work on your computer because it doesn't support wasm"
+  );
+}
 
 var editor = ace.edit("code");
 editor.setOptions({
@@ -9,6 +19,8 @@ editor.setTheme("ace/theme/monokai");
 editor.session.setNewLineMode("unix");
 editor.setShowPrintMargin(false);
 editor.session.setMode("ace/mode/tao");
+
+window.editor = editor;
 
 var Range = ace.require("ace/range").Range;
 var marker_ids = [];
@@ -56,21 +68,15 @@ if (window.Worker) {
 }
 
 document.querySelector("#save").addEventListener("click", () => {
-  save("playground.tao");
+  save();
 });
 
-document.querySelector("#load").addEventListener("change", (event) => {
-  const file = event.target.files[0];
-
-  const reader = new FileReader();
-  reader.addEventListener("load", (event) => {
-    editor.setValue(event.target.result);
-  });
-  reader.readAsText(file);
+document.querySelector("#download").addEventListener("click", () => {
+  download(currentFilename());
 });
 
 // Function to download data to a file
-function save(filename) {
+function download(filename) {
   var file = new Blob([editor.getValue()], {
     type: "text/plain",
   });
@@ -144,11 +150,6 @@ function clearMarkers() {
 }
 
 editor.commands.removeCommand("find");
-
-// String splice polyfill
-String.prototype.splice = function (idx, rem, str) {
-  return this.slice(0, idx) + str + this.slice(idx + Math.abs(rem));
-};
 
 (async function () {
   const examples = document.querySelector(".examples");
