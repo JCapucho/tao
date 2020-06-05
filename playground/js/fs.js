@@ -226,11 +226,11 @@ export function newFile() {
   let name = prompt("File name");
 
   if (name.length < 1) return;
-
+  
   let filesObjectStore = db
     .transaction("files", "readonly")
     .objectStore("files");
-  let get = filesObjectStore.get(`${currentFolder}/${name}`);
+  let get = filesObjectStore.get(currentFolder !== "" ? `${currentFolder}/${name}` : name);
 
   get.onsuccess = (event) => {
     if (event.target.result != null) {
@@ -245,7 +245,7 @@ export function newFile() {
 export function newFolder() {
   let name = prompt("Folder name");
 
-  if (name.length < 1) return;
+  if (!name || name.length < 1) return;
 
   let parts = currentFolder.split("/");
 
