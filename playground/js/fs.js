@@ -138,10 +138,12 @@ function createFile(root, name, file, playground) {
 }
 
 function getOrCreateFolder(root, name, root_path) {
-  if (root.querySelector(`#folders-${root_path}-${name}`) != null) {
+  let escaped_root_path = root_path.replace(/\//g,"-");
+
+  if (root.querySelector(`#folders-${escaped_root_path}-${name}`) != null) {
     return {
       node: root
-        .querySelector(`#folders-${root_path}-${name}`)
+        .querySelector(`#folders-${escaped_root_path}-${name}`)
         .querySelector("ul"),
       path: root_path !== "" ? `${root_path}/${name}` : name,
       created: false,
@@ -150,7 +152,7 @@ function getOrCreateFolder(root, name, root_path) {
 
   let folder = document.createElement("div");
   folder.classList.add("folder");
-  folder.id = `folders-${root_path}-${name}`;
+  folder.id = `folders-${escaped_root_path}-${name}`;
 
   let text = document.createElement("p");
   text.onclick = function (e) {
@@ -260,7 +262,8 @@ export function newFolder() {
     root_path = folder.path;
   }
 
-  if (root.querySelector(`#folders-${root_path}-${name}`) != null) {
+  let escaped_root_path = root_path.replace(/\//g,"-");
+  if (root.querySelector(`#folders-${escaped_root_path}-${name}`) != null) {
     alert("Folder already exists");
     return;
   }
