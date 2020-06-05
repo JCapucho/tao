@@ -5,7 +5,6 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const TerserJSPlugin = require("terser-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
-const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 
 const dist = path.resolve(__dirname, "dist");
 
@@ -21,7 +20,7 @@ const appConfig = {
     contentBase: dist,
   },
   resolve: {
-    modules: ['node_modules'],
+    modules: ["node_modules"],
     extensions: [".js"],
   },
   optimization: {
@@ -32,7 +31,6 @@ const appConfig = {
     },
   },
   plugins: [
-    new CleanWebpackPlugin(),
     new CopyPlugin([
       {
         from: path.resolve(__dirname, "static/assets"),
@@ -51,11 +49,6 @@ const appConfig = {
       {
         test: /\.css$/,
         use: [MiniCssExtractPlugin.loader, "css-loader?url=false"],
-      },
-      {
-        test: /\.mjs$/,
-        include: /node_modules/,
-        type: "javascript/auto",
       },
     ],
   },
@@ -81,7 +74,7 @@ const workerConfig = {
 const highlightingConfig = {
   entry: "./js/mode-tao.js",
   resolve: {
-    extensions: [".js", ".wasm"],
+    extensions: [".js"],
   },
   output: {
     path: path.resolve(dist, "ace"),
