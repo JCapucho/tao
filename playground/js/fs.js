@@ -19,7 +19,7 @@ if (!window.indexedDB) {
   files.innerHTML = "Your browser doesn't support IndexedDB";
 } else {
   var db;
-  var request = indexedDB.open("MyTestDatabase");
+  var request = indexedDB.open("FileSystemDB");
   request.onerror = function (event) {
     console.log(event);
   };
@@ -222,7 +222,19 @@ module.exports.newFile = function () {
 
   if (name.length < 1) return;
 
-  create(`${currentFolder}/${name}`);
+  var filesObjectStore = db
+    .transaction("files", "readonly")
+    .objectStore("files");
+  var get = filesObjectStore.get(`${currentFolder}/${name}`);
+
+  get.onsuccess = (event) => {
+    if(event.target.result != null) {
+      alert("file already exists");
+      return;
+    }
+
+    create(`${currentFolder}/${name}`);
+  };
 };
 
 module.exports.newFolder = function () {
@@ -245,10 +257,13 @@ module.exports.newFolder = function () {
     root_path = folder.path;
   }
 
+  if (root.querySelector(`#folders-${root_path}-${name}`) != null) {
+    alert("Folder already exists");
+    return;
+  }
+
   let folder = getOrCreateFolder(root, name, root_path);
 
-  console.log(folder.node);
-  
   currentFolder = `${root_path}/${name}`;
   focus_node.classList.remove("fs-focus");
   folder.node.parentNode.classList.add("fs-focus");
