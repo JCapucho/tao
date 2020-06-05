@@ -216,3 +216,14 @@ document.querySelector(".overlay").onclick = () => {
 document.querySelector(".explorer").onclick = (e) => {
   e.stopPropagation();
 };
+
+window.onkeydown = function(e) {
+  if(e.ctrlKey && e.key == "s") {
+    save();
+    return;
+  }
+}
+
+setInterval(function () {
+  save();
+}, 2000);
