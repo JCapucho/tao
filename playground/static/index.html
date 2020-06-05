@@ -49,23 +49,36 @@
           </div>
           <div class="fs-focus">
             --- Filesystem ---
-            <button class="fs-op">
+            <button class="fs-op" onclick="newFile();event.stopPropagation()">
               <img
                 loading="lazy"
                 width="14"
                 height="14"
                 src="icons/icons8-new-copy-50.png"
                 alt="New file"
-                onclick="newFile()"
               /></button
-            ><button class="fs-op">
+            ><button
+              class="fs-op"
+              onclick="newFolder();event.stopPropagation()"
+            >
               <img
                 loading="lazy"
                 width="14"
                 height="14"
                 src="icons/icons8-add-folder-50.png"
                 alt="New folder"
-                onclick="newFolder();event.stopPropagation()"
+              />
+            </button>
+            <button
+              class="fs-op"
+              onclick="downloadAll();event.stopPropagation()"
+            >
+              <img
+                loading="lazy"
+                width="14"
+                height="14"
+                src="icons/icons8-download-50.png"
+                alt="Download"
               />
             </button>
             <ul class="files">

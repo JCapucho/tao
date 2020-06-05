@@ -1,5 +1,7 @@
+import JSZip from "jszip";
 const files = document.querySelector(".files");
 
+let db;
 let currentFolder = "";
 let focus_node = files.parentNode;
 let current_file = "playground.tao";
@@ -13,23 +15,21 @@ files.parentNode.onclick = function () {
 };
 
 if (!window.indexedDB) {
-  console.log(
-    "Your browser doesn't support a stable version of IndexedDB. The fs tab won't work"
-  );
   files.innerHTML = "Your browser doesn't support IndexedDB";
 } else {
-  var db;
-  var request = indexedDB.open("FileSystemDB");
+  let request = indexedDB.open("FileSystemDB",2);
+
   request.onerror = function (event) {
     console.log(event);
   };
+
   request.onsuccess = function (event) {
     db = event.target.result;
 
-    var filesObjectStore = db
+    let filesObjectStore = db
       .transaction("files", "readonly")
       .objectStore("files");
-    var get_all = filesObjectStore.getAll();
+    let get_all = filesObjectStore.getAll();
     get_all.onsuccess = function (event) {
       if (event.target.result.length === 0) {
         create("playground.tao");
@@ -73,10 +73,13 @@ if (!window.indexedDB) {
   };
 
   request.onupgradeneeded = function (event) {
-    // Save the IDBDatabase interface
-    var db = event.target.result;
+    db = event.target.result;
 
-    var objectStore = db.createObjectStore("files", { keyPath: "path" });
+    if(event.oldVersion != 0) {
+      db.deleteObjectStore("files");
+    }
+
+    db.createObjectStore("files", { keyPath: "path" });
   };
 }
 
@@ -85,10 +88,10 @@ function createFile(root, name, file, playground) {
   li.classList.add("link");
   li.innerText = name;
   li.onclick = () => {
-    var filesObjectStore = db
+    let filesObjectStore = db
       .transaction("files", "readonly")
       .objectStore("files");
-    var get = filesObjectStore.get(file.path);
+    let get = filesObjectStore.get(file.path);
 
     get.onsuccess = (event) => {
       const reader = new FileReader();
@@ -115,7 +118,7 @@ function createFile(root, name, file, playground) {
   icon.src = "icons/icons8-delete-bin-50.png";
   icon.onclick = function (e) {
     if (confirm("Are you sure")) {
-      var del = db
+      let del = db
         .transaction("files", "readwrite")
         .objectStore("files")
         .delete(file.path);
@@ -140,7 +143,7 @@ function getOrCreateFolder(root, name, root_path) {
       node: root
         .querySelector(`#folders-${root_path}-${name}`)
         .querySelector("ul"),
-      path: `${root_path}/${name}`,
+      path: root_path !== "" ? `${root_path}/${name}` : name,
       created: false,
     };
   }
@@ -151,7 +154,7 @@ function getOrCreateFolder(root, name, root_path) {
 
   let text = document.createElement("p");
   text.onclick = function (e) {
-    currentFolder = `${root_path}/${name}`;
+    currentFolder = root_path !== "" ? `${root_path}/${name}` : name;
     this.parentNode.classList.toggle("hide-children");
     focus_node.classList.remove("fs-focus");
     this.parentNode.classList.add("fs-focus");
@@ -179,21 +182,21 @@ function getOrCreateFolder(root, name, root_path) {
 
   return {
     node: contents,
-    path: `${root_path}/${name}`,
+    path: root_path !== "" ? `${root_path}/${name}` : name,
     created: true,
   };
 }
 
 function create(path) {
-  var filesObjectStore = db
+  let filesObjectStore = db
     .transaction("files", "readwrite")
     .objectStore("files");
 
-  let file = {
+  const file = {
     path: path,
     blob: new Blob([], { type: "text/plain" }),
   };
-  var add = filesObjectStore.add(file);
+  let add = filesObjectStore.add(file);
 
   add.onsuccess = function (event) {
     let parts = path.split("/");
@@ -217,27 +220,27 @@ function create(path) {
   };
 }
 
-module.exports.newFile = function () {
+export function newFile() {
   let name = prompt("File name");
 
   if (name.length < 1) return;
 
-  var filesObjectStore = db
+  let filesObjectStore = db
     .transaction("files", "readonly")
     .objectStore("files");
-  var get = filesObjectStore.get(`${currentFolder}/${name}`);
+  let get = filesObjectStore.get(`${currentFolder}/${name}`);
 
   get.onsuccess = (event) => {
-    if(event.target.result != null) {
+    if (event.target.result != null) {
       alert("file already exists");
       return;
     }
 
-    create(`${currentFolder}/${name}`);
+    create(currentFolder !== "" ? `${currentFolder}/${name}` : name);
   };
-};
+}
 
-module.exports.newFolder = function () {
+export function newFolder() {
   let name = prompt("Folder name");
 
   if (name.length < 1) return;
@@ -264,14 +267,14 @@ module.exports.newFolder = function () {
 
   let folder = getOrCreateFolder(root, name, root_path);
 
-  currentFolder = `${root_path}/${name}`;
+  currentFolder = root_path !== "" ? `${root_path}/${name}` : name;
   focus_node.classList.remove("fs-focus");
   folder.node.parentNode.classList.add("fs-focus");
   focus_node = folder.node.parentNode;
-};
+}
 
-module.exports.save = function () {
-  var filesObjectStore = db
+export function save() {
+  let filesObjectStore = db
     .transaction("files", "readwrite")
     .objectStore("files");
 
@@ -279,11 +282,38 @@ module.exports.save = function () {
     path: current_file,
     blob: new Blob([editor.getValue()], { type: "text/plain" }),
   };
-  var Save = filesObjectStore.put(file);
+  let Save = filesObjectStore.put(file);
 
   save.onsuccess = function (event) {};
-};
+}
 
-module.exports.currentFilename = function () {
+export function currentFilename() {
   return current_file_name;
-};
+}
+
+export function downloadAll() {
+  let zip = new JSZip();
+
+  let filesObjectStore = db
+    .transaction("files", "readonly")
+    .objectStore("files");
+  let get_all = filesObjectStore.getAll();
+  get_all.onsuccess = function (event) {
+    for (const file of event.target.result) {
+      zip.file(file.path, file.blob);
+    }
+
+    zip.generateAsync({ type: "blob" }).then(function (content) {
+      let a = document.createElement("a"),
+        url = URL.createObjectURL(content);
+      a.href = url;
+      a.download = "fs.zip";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }, 0);
+    });
+  };
+}

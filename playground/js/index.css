@@ -47,7 +47,7 @@
   width: 100%;
   height: 100%;
   background-color: rgba(30, 30, 30, 0.8);
-  z-index: 6;
+  z-index: 7;
 }
 
 .explorer {
@@ -126,17 +126,6 @@ body {
 
 *::-moz-focus-inner {
   border: 0;
-}
-
-.dropdown {
-  position: relative;
-}
-
-.dropdown-content {
-  display: none;
-  position: absolute;
-  background-color: gray;
-  z-index: 1;
 }
 
 .toolbar > *:hover {

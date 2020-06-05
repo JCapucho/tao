@@ -5,6 +5,7 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const TerserJSPlugin = require("terser-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
+const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 
 const dist = path.resolve(__dirname, "dist");
 
@@ -14,18 +15,24 @@ const appConfig = {
   },
   output: {
     path: dist,
-    filename: "[name].[contenthash].js"
+    filename: "[name].[contenthash].js",
   },
   devServer: {
     contentBase: dist,
   },
   resolve: {
-    extensions: [".js", ".wasm"],
+    modules: ['node_modules'],
+    extensions: [".js"],
   },
   optimization: {
     minimizer: [new TerserJSPlugin({}), new OptimizeCSSAssetsPlugin({})],
+    splitChunks: {
+      chunks: "all",
+      name: false,
+    },
   },
   plugins: [
+    new CleanWebpackPlugin(),
     new CopyPlugin([
       {
         from: path.resolve(__dirname, "static/assets"),
@@ -44,6 +51,11 @@ const appConfig = {
       {
         test: /\.css$/,
         use: [MiniCssExtractPlugin.loader, "css-loader?url=false"],
+      },
+      {
+        test: /\.mjs$/,
+        include: /node_modules/,
+        type: "javascript/auto",
       },
     ],
   },
@@ -66,7 +78,6 @@ const workerConfig = {
   },
 };
 
-
 const highlightingConfig = {
   entry: "./js/mode-tao.js",
   resolve: {
@@ -78,4 +89,4 @@ const highlightingConfig = {
   },
 };
 
-module.exports = [appConfig, workerConfig,highlightingConfig];
+module.exports = [appConfig, workerConfig, highlightingConfig];

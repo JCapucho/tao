@@ -1,8 +1,15 @@
 import "./index.css";
-import { newFile, newFolder, save, currentFilename } from "./fs.js";
+import {
+  newFile,
+  newFolder,
+  save,
+  currentFilename,
+  downloadAll,
+} from "./fs.js";
 
 window.newFile = newFile;
 window.newFolder = newFolder;
+window.downloadAll = downloadAll;
 
 if (!window.WebAssembly) {
   alert(
@@ -10,7 +17,7 @@ if (!window.WebAssembly) {
   );
 }
 
-var editor = ace.edit("code");
+let editor = ace.edit("code");
 editor.setOptions({
   fontFamily: "Fira Code",
   fontSize: "12pt",
@@ -22,8 +29,8 @@ editor.session.setMode("ace/mode/tao");
 
 window.editor = editor;
 
-var Range = ace.require("ace/range").Range;
-var marker_ids = [];
+const Range = ace.require("ace/range").Range;
+let marker_ids = [];
 
 if (window.Worker) {
   let worker = new Worker("./worker.js");
@@ -77,25 +84,20 @@ document.querySelector("#download").addEventListener("click", () => {
 
 // Function to download data to a file
 function download(filename) {
-  var file = new Blob([editor.getValue()], {
+  let file = new Blob([editor.getValue()], {
     type: "text/plain",
   });
-  if (window.navigator.msSaveOrOpenBlob)
-    // IE10+
-    window.navigator.msSaveOrOpenBlob(file, filename);
-  else {
-    // Others
-    var a = document.createElement("a"),
-      url = URL.createObjectURL(file);
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(function () {
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-    }, 0);
-  }
+
+  let a = document.createElement("a"),
+    url = URL.createObjectURL(file);
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function () {
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }, 0);
 }
 
 function handle_errors(errors) {
