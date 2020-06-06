@@ -30,7 +30,7 @@ editor.session.setMode("ace/mode/tao");
 window.editor = editor;
 
 const Range = ace.require("ace/range").Range;
-let marker_ids = [];
+let markerIds = [];
 
 if (window.Worker) {
   let worker = new Worker("./worker.js");
@@ -43,7 +43,7 @@ if (window.Worker) {
     } else {
       let errors = result.data.errors;
 
-      handle_errors(errors);
+      handleErrors(errors);
     }
   };
 
@@ -67,7 +67,7 @@ if (window.Worker) {
             editor.getValue()
           );
         } catch (errors) {
-          handle_errors(errors);
+          handleErrors(errors);
         }
       });
     })
@@ -100,7 +100,7 @@ function download(filename) {
   }, 0);
 }
 
-function handle_errors(errors) {
+function handleErrors(errors) {
   document.querySelector("#output").innerHTML = "";
 
   let span = document.createElement("span");
@@ -124,7 +124,7 @@ function handle_errors(errors) {
       let start = editor.session.doc.indexToPosition(span[0]);
       let end = editor.session.doc.indexToPosition(span[1]);
 
-      marker_ids.push(
+      markerIds.push(
         editor.session.addMarker(
           new Range(start.row, start.column, end.row, end.column),
           "error",
@@ -143,11 +143,11 @@ function handle_errors(errors) {
 }
 
 function clearMarkers() {
-  let id = marker_ids.pop();
+  let id = markerIds.pop();
 
   while (id != undefined) {
     editor.session.removeMarker(id);
-    id = marker_ids.pop();
+    id = markerIds.pop();
   }
 }
 

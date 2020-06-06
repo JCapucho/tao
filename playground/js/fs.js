@@ -2,22 +2,23 @@ import JSZip from "jszip";
 const files = document.querySelector(".files");
 
 let db;
+let folders = {};
 let currentFolder = "";
-let focus_node = files.parentNode;
-let current_file = "playground.tao";
-let current_file_name = "playground.tao";
+let focusNode = files.parentNode;
+let currentFile = "playground.tao";
+let currentFileName = "playground.tao";
 
 files.parentNode.onclick = function () {
   currentFolder = "";
-  focus_node.classList.remove("fs-focus");
+  focusNode.classList.remove("fs-focus");
   this.classList.add("fs-focus");
-  focus_node = this;
+  focusNode = this;
 };
 
 if (!window.indexedDB) {
   files.innerHTML = "Your browser doesn't support IndexedDB";
 } else {
-  let request = indexedDB.open("FileSystemDB",2);
+  let request = indexedDB.open("FileSystemDB", 2);
 
   request.onerror = function (event) {
     console.log(event);
@@ -29,8 +30,8 @@ if (!window.indexedDB) {
     let filesObjectStore = db
       .transaction("files", "readonly")
       .objectStore("files");
-    let get_all = filesObjectStore.getAll();
-    get_all.onsuccess = function (event) {
+    let getAll = filesObjectStore.getAll();
+    getAll.onsuccess = function (event) {
       if (event.target.result.length === 0) {
         create("playground.tao");
       }
@@ -42,7 +43,7 @@ if (!window.indexedDB) {
         let parts = file.path.split("/");
 
         let root = files;
-        let root_path = "";
+        let rootPath = "";
 
         for (let i = 0; i < parts.length; i++) {
           const element = parts[i];
@@ -63,9 +64,9 @@ if (!window.indexedDB) {
               reader.readAsText(file.blob);
             }
           } else {
-            let folder = getOrCreateFolder(root, element, root_path);
+            let folder = getOrCreateFolder(root, element, rootPath);
             root = folder.node;
-            root_path = folder.path;
+            rootPath = folder.path;
           }
         }
       }
@@ -75,7 +76,7 @@ if (!window.indexedDB) {
   request.onupgradeneeded = function (event) {
     db = event.target.result;
 
-    if(event.oldVersion != 0) {
+    if (event.oldVersion != 0) {
       db.deleteObjectStore("files");
     }
 
@@ -104,8 +105,8 @@ function createFile(root, name, file, playground) {
       reader.readAsText(event.target.result.blob);
     };
 
-    current_file = file.path;
-    current_file_name = name;
+    currentFile = file.path;
+    currentFileName = name;
 
     document.querySelector(".overlay").style.display = "none";
   };
@@ -137,30 +138,25 @@ function createFile(root, name, file, playground) {
   root.append(li);
 }
 
-function getOrCreateFolder(root, name, root_path) {
-  let escaped_root_path = root_path.replace(/\//g,"-");
-
-  if (root.querySelector(`#folders-${escaped_root_path}-${name}`) != null) {
+function getOrCreateFolder(root, name, rootPath) {
+  if (folders[`${rootPath}-${name}`] != null) {
     return {
-      node: root
-        .querySelector(`#folders-${escaped_root_path}-${name}`)
-        .querySelector("ul"),
-      path: root_path !== "" ? `${root_path}/${name}` : name,
+      node: folders[`${rootPath}-${name}`].querySelector("ul"),
+      path: rootPath !== "" ? `${rootPath}/${name}` : name,
       created: false,
     };
   }
 
   let folder = document.createElement("div");
   folder.classList.add("folder");
-  folder.id = `folders-${escaped_root_path}-${name}`;
 
   let text = document.createElement("p");
   text.onclick = function (e) {
-    currentFolder = root_path !== "" ? `${root_path}/${name}` : name;
+    currentFolder = rootPath !== "" ? `${rootPath}/${name}` : name;
     this.parentNode.classList.toggle("hide-children");
-    focus_node.classList.remove("fs-focus");
+    focusNode.classList.remove("fs-focus");
     this.parentNode.classList.add("fs-focus");
-    focus_node = this.parentNode;
+    focusNode = this.parentNode;
     e.stopPropagation();
   };
   let icon = document.createElement("img");
@@ -171,9 +167,9 @@ function getOrCreateFolder(root, name, root_path) {
 
   text.append(icon);
 
-  let text_name = document.createTextNode(name);
+  let textName = document.createTextNode(name);
 
-  text.append(text_name);
+  text.append(textName);
   folder.append(text);
 
   let contents = document.createElement("ul");
@@ -182,9 +178,11 @@ function getOrCreateFolder(root, name, root_path) {
 
   root.append(folder);
 
+  folders[`${rootPath}-${name}`] = folder;
+
   return {
     node: contents,
-    path: root_path !== "" ? `${root_path}/${name}` : name,
+    path: rootPath !== "" ? `${rootPath}/${name}` : name,
     created: true,
   };
 }
@@ -204,7 +202,7 @@ function create(path) {
     let parts = path.split("/");
 
     let root = files;
-    let root_path = "";
+    let rootPath = "";
 
     for (let i = 0; i < parts.length; i++) {
       const element = parts[i];
@@ -214,9 +212,9 @@ function create(path) {
       if (i === parts.length - 1) {
         createFile(root, element, file, false);
       } else {
-        let folder = getOrCreateFolder(root, element, root_path);
+        let folder = getOrCreateFolder(root, element, rootPath);
         root = folder.node;
-        root_path = folder.path;
+        rootPath = folder.path;
       }
     }
   };
@@ -225,12 +223,18 @@ function create(path) {
 export function newFile() {
   let name = prompt("File name");
 
-  if (name.length < 1) return;
-  
+  if (!name || name.length < 1) return;
+  if (/\//g.test(name)) {
+    alert("Unsupported character");
+    return;
+  }
+
   let filesObjectStore = db
     .transaction("files", "readonly")
     .objectStore("files");
-  let get = filesObjectStore.get(currentFolder !== "" ? `${currentFolder}/${name}` : name);
+  let get = filesObjectStore.get(
+    currentFolder !== "" ? `${currentFolder}/${name}` : name
+  );
 
   get.onsuccess = (event) => {
     if (event.target.result != null) {
@@ -246,34 +250,37 @@ export function newFolder() {
   let name = prompt("Folder name");
 
   if (!name || name.length < 1) return;
-
+  if (/\//g.test(name)) {
+    alert("Unsupported character");
+    return;
+  }
+  
   let parts = currentFolder.split("/");
 
   let root = files;
-  let root_path = "";
+  let rootPath = "";
 
   for (let i = 0; i < parts.length; i++) {
     const element = parts[i];
 
     if (element == "") continue;
 
-    let folder = getOrCreateFolder(root, element, root_path);
+    let folder = getOrCreateFolder(root, element, rootPath);
     root = folder.node;
-    root_path = folder.path;
+    rootPath = folder.path;
   }
 
-  let escaped_root_path = root_path.replace(/\//g,"-");
-  if (root.querySelector(`#folders-${escaped_root_path}-${name}`) != null) {
+  if (folders[`${rootPath}-${name}`] != null) {
     alert("Folder already exists");
     return;
   }
 
-  let folder = getOrCreateFolder(root, name, root_path);
+  let folder = getOrCreateFolder(root, name, rootPath);
 
-  currentFolder = root_path !== "" ? `${root_path}/${name}` : name;
-  focus_node.classList.remove("fs-focus");
+  currentFolder = rootPath !== "" ? `${rootPath}/${name}` : name;
+  focusNode.classList.remove("fs-focus");
   folder.node.parentNode.classList.add("fs-focus");
-  focus_node = folder.node.parentNode;
+  focusNode = folder.node.parentNode;
 }
 
 export function save() {
@@ -282,7 +289,7 @@ export function save() {
     .objectStore("files");
 
   let file = {
-    path: current_file,
+    path: currentFile,
     blob: new Blob([editor.getValue()], { type: "text/plain" }),
   };
   let Save = filesObjectStore.put(file);
@@ -291,7 +298,7 @@ export function save() {
 }
 
 export function currentFilename() {
-  return current_file_name;
+  return currentFileName;
 }
 
 export function downloadAll() {
@@ -300,8 +307,8 @@ export function downloadAll() {
   let filesObjectStore = db
     .transaction("files", "readonly")
     .objectStore("files");
-  let get_all = filesObjectStore.getAll();
-  get_all.onsuccess = function (event) {
+  let getAll = filesObjectStore.getAll();
+  getAll.onsuccess = function (event) {
     for (const file of event.target.result) {
       zip.file(file.path, file.blob);
     }
