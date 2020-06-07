@@ -86,8 +86,11 @@ if (!window.indexedDB) {
 
 function createFile(root, name, file, playground) {
   let li = document.createElement("li");
+  let text = document.createElement("p");
   li.classList.add("link");
-  li.innerText = name;
+  text.innerText = name;
+  li.append(text);
+
   li.onclick = () => {
     let filesObjectStore = db
       .transaction("files", "readonly")
@@ -114,8 +117,8 @@ function createFile(root, name, file, playground) {
   let icon = document.createElement("img");
   icon.classList.add("delete");
   icon.loading = "lazy";
-  icon.width = "12";
-  icon.height = "12";
+  icon.width = "20";
+  icon.height = "20";
   icon.src = "icons/icons8-delete-bin-50.png";
   icon.onclick = function (e) {
     if (confirm("Are you sure")) {
@@ -224,6 +227,10 @@ export function newFile() {
   let name = prompt("File name");
 
   if (!name || name.length < 1) return;
+  if (name.length > 255) {
+    alert("Name can't be more than 255 character long");
+    return;
+  }
   if (/\//g.test(name)) {
     alert("Unsupported character");
     return;
@@ -250,11 +257,15 @@ export function newFolder() {
   let name = prompt("Folder name");
 
   if (!name || name.length < 1) return;
+  if (name.length > 255) {
+    alert("Name can't be more than 255 character long");
+    return;
+  }
   if (/\//g.test(name)) {
     alert("Unsupported character");
     return;
   }
-  
+
   let parts = currentFolder.split("/");
 
   let root = files;

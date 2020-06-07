@@ -191,13 +191,25 @@ ul > li {
   background-size: 12px 12px;
 }
 
+.link > p {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  margin: 0;
+  width: min-content;
+  max-width: calc(100% - 20px);
+  display: inline-block;
+}
+
 .link:hover {
   text-decoration: underline solid black;
 }
 
 .folder > p {
   cursor: pointer;
+  text-overflow: ellipsis;
+  overflow: hidden;
   margin: 0;
+  white-space: nowrap;
 }
 
 .folder > p > img {
@@ -256,5 +268,5 @@ ul > li {
 }
 
 .link:hover > .delete {
-  display: inline;
+  display: inline-block;
 }
